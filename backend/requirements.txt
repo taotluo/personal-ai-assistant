@@ -1,0 +1,8 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+websockets>=13
+zhipuai>=2.1
+openai>=1.40
+pydantic>=2.7
+pydantic-settings>=2.3
+aiosqlite>=0.20
