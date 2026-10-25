@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import shlex
+from urllib.parse import urlparse
 
 import websockets
 
@@ -25,6 +26,15 @@ DEFAULT_ZCODE_APP = "/Applications/ZCode.app/Contents/MacOS/ZCode"
 DEFAULT_ZCODE = "/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs"
 
 log = logging.getLogger("paa.executor")
+
+
+def _connect(url: str, token: str):
+    """本地地址不走系统代理（macOS 系统代理会劫持 localhost 连接）。"""
+    host = (urlparse(url).hostname or "").lower()
+    kw = {"max_size": 10 ** 7}
+    if host in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+        kw["proxy"] = None
+    return websockets.connect(f"{url}?token={token}", **kw)
 
 
 class Executor:
@@ -37,9 +47,7 @@ class Executor:
     async def run_forever(self) -> None:
         while True:
             try:
-                async with websockets.connect(
-                    f"{self.url}?token={self.token}", max_size=10 ** 7
-                ) as ws:
+                async with _connect(self.url, self.token) as ws:
                     log.info("已连接后端 %s", self.url)
                     await ws.send(json.dumps({
                         "type": "executor_hello",

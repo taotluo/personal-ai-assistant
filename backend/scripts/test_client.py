@@ -13,8 +13,18 @@ import argparse
 import asyncio
 import json
 import sys
+from urllib.parse import urlparse
 
 import websockets
+
+
+def _connect(url: str, token: str):
+    """本地地址不走系统代理（macOS 系统代理会劫持 localhost 连接）。"""
+    host = (urlparse(url).hostname or "").lower()
+    kw = {"max_size": 10 ** 7}
+    if host in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+        kw["proxy"] = None
+    return websockets.connect(f"{url}?token={token}", **kw)
 
 
 def parse_args() -> argparse.Namespace:
@@ -101,7 +111,7 @@ async def handle(ws, env: dict, args: argparse.Namespace, stop: asyncio.Event) -
 
 
 async def run(args: argparse.Namespace) -> None:
-    async with websockets.connect(f"{args.url}?token={args.token}", max_size=10 ** 7) as ws:
+    async with _connect(args.url, args.token) as ws:
         stop = asyncio.Event()
 
         async def _bail():

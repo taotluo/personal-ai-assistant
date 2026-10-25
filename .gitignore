@@ -11,3 +11,4 @@ dist/
 *.db
 nohup.out
 .zcode/
+.run/
